@@ -1,0 +1,65 @@
+import pandas as pd
+import numpy as np
+carset = pd.read_csv("/kaggle/input/cartest/carprice.csv")
+
+X = carset[['wheelbase','carlength','carwidth','carheight','curbweight','enginesize','boreratio',
+            'stroke','compressionratio','horsepower','peakrpm','citympg','highwaympg']].values
+Y = carset['price'].values
+
+X = (X - X.mean(axis=0)) / X.std(axis=0)
+
+m, n = X.shape
+
+w = np.zeros(n)  
+b = 0
+
+alpha = 0.1
+iterations = 1000
+
+
+def gradient_descent(X, Y, w, b, alpha, iterations):  
+    for _ in range(iterations):
+        dw = np.zeros(n)
+        db = 0
+        for i in range(m):
+            prediction = np.dot(X[i], w) + b
+            error = prediction - Y[i]
+            dw += (1/m) * error * X[i]
+            db += (1/m) * error
+        
+        w -= alpha * dw
+        b -= alpha * db
+    return w, b
+
+
+w, b = gradient_descent(X, Y, w, b, alpha, iterations)
+
+
+print("Learned weights (w):", w)
+print("Learned bias (b):", b)
+
+
+def predict(X, w, b):
+    return np.dot(X, w) + b
+
+for i in range(m):
+    predicted_price = predict(X[i], w, b)
+    print("Predicted price for the %d car is %d"%(i+1,predicted_price))
+    print("The price is off by %d"%(predicted_price - Y[i]))
+
+
+def R2score(X, Y, w, b):
+    SSres = 0  
+    SStot = 0  
+    mean_y = Y.mean()  
+
+    
+    for i in range(len(Y)):
+        yhat = predict(X[i], w, b) 
+        SSres += (Y[i] - yhat) ** 2  
+        SStot += (Y[i] - mean_y) ** 2 
+
+   
+    return 1 - (SSres / SStot)
+
+print("R2 score is %f"%(R2score(X,Y,w,b)))
